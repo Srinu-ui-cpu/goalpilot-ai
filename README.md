@@ -1,6 +1,7 @@
 # GoalPilot AI 🚀
 > *"Turn Learning Goals Into Completed Outcomes"*
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FSrinu-ui-cpu%2Fgoalpilot-ai)
 [![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-emerald.svg)]()
 [![Next.js 15](https://img.shields.io/badge/Next.js-15.5-indigo.svg)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)]()
