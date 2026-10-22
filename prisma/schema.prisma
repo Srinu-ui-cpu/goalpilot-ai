@@ -1,0 +1,337 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  fullName        String?
+  avatarUrl       String?
+  authProvider    String           @default("email")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  profile         Profile?
+  apiKeys         ApiKey[]
+  goals           Goal[]
+  assessments     Assessment[]
+  notes           Note[]
+  flashcards      Flashcard[]
+  interviewScores InterviewScore[]
+  notifications   Notification[]
+  aiChats         AIChat[]
+  analytics       Analytics[]
+  careerPaths     CareerPath[]
+  browserEvents   BrowserEvent[]
+}
+
+model Profile {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerGoal             String
+  currentRole            String?
+  wakeUpTime             String?
+  sleepTime              String?
+  workTimings            String?
+  gymSchedule            String?
+  dailyAvailabilityHours Float    @default(2.0)
+  preferredStudyDuration Int      @default(45)
+  preferredReminderType  String   @default("all")
+  preferredAICoach       String   @default("david_goggins")
+  timezone               String   @default("UTC")
+  focusScore             Int      @default(90)
+  interviewReadiness     Int      @default(75)
+  projectReadiness       Int      @default(70)
+  streakDays             Int      @default(0)
+  totalStudyMinutes      Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model ApiKey {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String   // gemini, openai, claude, openrouter, deepseek
+  encryptedKey String
+  keyHint      String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Goal {
+  id                   String            @id @default(uuid())
+  userId               String
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                String
+  description          String?
+  targetCompletionDate DateTime
+  reasonForGoal        String
+  priority             String            @default("high")
+  expectedOutcome      String
+  progressPercentage   Float             @default(0.0)
+  hoursRemaining       Float             @default(0.0)
+  daysRemaining        Int               @default(0)
+  status               String            @default("active")
+  commitmentAcceptedAt DateTime?
+  commitmentSignature  String?
+  selectedCoach        String            @default("david_goggins")
+  resources            Resource[]
+  sessions             Session[]
+  schedules            Schedule[]
+  projects             Project[]
+  progressHistories    ProgressHistory[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model Resource {
+  id                   String          @id @default(uuid())
+  goalId               String
+  goal                 Goal            @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  title                String
+  resourceType         String
+  sourceUrl            String?
+  filePath             String?
+  totalDurationMinutes Int             @default(0)
+  itemOrVideoCount     Int             @default(1)
+  difficulty           String          @default("Intermediate")
+  knowledgeBaseSummary String?
+  learningOutcomes     Json?
+  learningChunks       LearningChunk[]
+  createdAt            DateTime        @default(now())
+}
+
+model LearningChunk {
+  id                  String    @id @default(uuid())
+  resourceId          String
+  resource            Resource  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  title               String
+  sequenceOrder       Int
+  durationMinutes     Int
+  difficulty          String    @default("Intermediate")
+  summary             String?
+  keyConcepts         Json?
+  suggestedStudyHours Float     @default(1.0)
+  sessions            Session[]
+  createdAt           DateTime  @default(now())
+}
+
+model Schedule {
+  id                    String   @id @default(uuid())
+  goalId                String
+  goal                  Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  planTier              String   @default("balanced")
+  dailyStudyMinutes     Int
+  completionProbability Float
+  estimatedSuccessRate  Float
+  isAdaptive            Boolean  @default(true)
+  createdAt             DateTime @default(now())
+}
+
+model Session {
+  id              String         @id @default(uuid())
+  goalId          String
+  goal            Goal           @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  chunkId         String?
+  chunk           LearningChunk? @relation(fields: [chunkId], references: [id])
+  sessionNumber   Int
+  title           String
+  description     String?
+  scheduledDate   DateTime
+  scheduledTime   String
+  durationMinutes Int
+  status          String         @default("upcoming")
+  difficulty      String         @default("Medium")
+  tasks           Json?
+  focusScore      Int?
+  completedAt     DateTime?
+  assessment      Assessment?
+  notes           Note[]
+  reminders       Reminder[]
+  aiChats         AIChat[]
+  createdAt       DateTime       @default(now())
+}
+
+model Assessment {
+  id                      String   @id @default(uuid())
+  sessionId               String   @unique
+  session                 Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  overallScore            Int
+  understandingScore      Int?
+  communicationScore      Int?
+  confidenceScore         Int?
+  practicalScore          Int?
+  interviewReadinessScore Int?
+  userAnswers             Json
+  evaluationStrengths     Json?
+  evaluationWeaknesses    Json?
+  betterAnswer            String?
+  expertAnswer            String?
+  detailedExplanation     String?
+  completedAt             DateTime @default(now())
+}
+
+model Project {
+  id                       String        @id @default(uuid())
+  goalId                   String
+  goal                     Goal          @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  title                    String
+  projectLevel             String        @default("Industry-Level")
+  problemStatement         String
+  businessContext          String
+  architectureSummary      String
+  requiredSoftware         Json?
+  folderStructure          String?
+  databaseRequirements     Json?
+  apiRequirements          Json?
+  frontendRequirements     Json?
+  dashboardRequirements    Json?
+  presentationRequirements Json?
+  successCriteria          Json?
+  deliverables             Json?
+  learningLinks            Json?
+  status                   String        @default("in_progress")
+  tasks                    ProjectTask[]
+  createdAt                DateTime      @default(now())
+}
+
+model ProjectTask {
+  id             String    @id @default(uuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  milestoneOrder Int
+  isCompleted    Boolean   @default(false)
+  completedAt    DateTime?
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  noteType  String   @default("session_notes")
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Flashcard {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic            String
+  question         String
+  answer           String
+  intervalDays     Int      @default(1)
+  nextReviewDate   DateTime
+  repetitionCount  Int      @default(0)
+  difficultyRating String   @default("good")
+  createdAt        DateTime @default(now())
+}
+
+model InterviewScore {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category            String
+  score               Int
+  readinessPercentage Int
+  questionsAttempted  Int      @default(1)
+  feedback            String?
+  createdAt           DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  actionUrl String?
+  createdAt DateTime @default(now())
+}
+
+model Reminder {
+  id                   String    @id @default(uuid())
+  sessionId            String
+  session              Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sequenceStage        String
+  scheduledTriggerTime DateTime
+  personalizedMessage  String
+  dispatchedAt         DateTime?
+  status               String    @default("pending")
+}
+
+model AIChat {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String?
+  session     Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  coachType   String
+  role        String
+  message     String
+  contextType String?
+  createdAt   DateTime @default(now())
+}
+
+model Analytics {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recordDate          DateTime
+  studyMinutes        Int      @default(0)
+  focusScore          Int      @default(0)
+  completionRate      Int      @default(0)
+  interviewsCompleted Int      @default(0)
+  projectsProgressed  Int      @default(0)
+
+  @@unique([userId, recordDate])
+}
+
+model ProgressHistory {
+  id                 String   @id @default(uuid())
+  goalId             String
+  goal               Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  snapshotDate       DateTime
+  progressPercentage Float
+  hoursInvested      Float
+  sessionsCompleted  Int
+}
+
+model CareerPath {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackName             String
+  currentMatchPercentage Int
+  targetSalaryRange     String?
+  nodes                 Json
+  createdAt             DateTime @default(now())
+}
+
+model BrowserEvent {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType        String
+  platform         String
+  url              String
+  watchTimeSeconds Int      @default(0)
+  metadata         Json?
+  createdAt        DateTime @default(now())
+}

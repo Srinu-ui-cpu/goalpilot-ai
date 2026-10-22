@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "GoalPilot AI - Learning Companion",
+  "version": "1.0.0",
+  "description": "Turn learning goals into completed outcomes. Sync YouTube, LeetCode, Coursera, Udemy, and GitHub directly with GoalPilot AI.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.youtube.com/*",
+    "https://*.udemy.com/*",
+    "https://*.coursera.org/*",
+    "https://*.leetcode.com/*",
+    "https://*.hackerrank.com/*",
+    "https://*.github.com/*",
+    "http://localhost:3000/*",
+    "https://*.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.youtube.com/*",
+        "https://*.udemy.com/*",
+        "https://*.coursera.org/*",
+        "https://*.leetcode.com/*",
+        "https://*.hackerrank.com/*",
+        "https://*.github.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GoalPilot AI Companion"
+  }
+}
